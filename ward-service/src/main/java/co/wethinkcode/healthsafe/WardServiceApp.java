@@ -1,17 +1,74 @@
 package co.wethinkcode.healthsafe;
 
+
+import io.javalin.Javalin;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.HashMap;
+import java.util.Map;
+
 import io.javalin.Javalin;
 
 public class WardServiceApp {
 
     public static void main(String[] args) {
+
+        Map<String, Ward> wardDirectory = new HashMap<>();
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:7030/wards"))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                ObjectMapper mapper = new ObjectMapper();
+                Ward[] fetchedWards = mapper.readValue(response.body(), Ward[].class);
+
+                for (Ward w : fetchedWards) {
+                    wardDirectory.put(w.getWardId(), w);
+                }
+                System.out.println("Ward Service successfully loaded " + wardDirectory.size() + " wards.");
+            } else {
+                System.err.println("Failed to fetch from Ingestion Service. Status: " + response.statusCode());
+            }
+        } catch (Exception e) {
+            System.err.println("Error connecting to Ingestion Service: " + e.getMessage());
+        }
+
+
         Javalin app = Javalin.create().start(7031);
 
         app.get("/health", ctx -> ctx.result("OK"));
 
+        app.get("/wards", ctx -> {
+            ctx.json(wardDirectory.values());
+        });
+
+        app.get("/wards/{id}", ctx -> {
+            String id = ctx.pathParam("id").toUpperCase();
+            if (wardDirectory.containsKey(id)) {
+                ctx.json(wardDirectory.get(id));
+            } else {
+                ctx.status(404).result("Ward not found");
+            }
+        });
+    }
+
+
+        
+    
+
+
+
         // TODO (Provides lists of wards and departments.)
         // Add domain endpoints for ward-service here.
-    }
+    
 }
 
 // MQ TODO: subscribes to ActiveMQ topic MqConfig.TOPIC at MqConfig.BROKER_URL (see co.wethinkcode.healthsafe.mq.MqConfig)
