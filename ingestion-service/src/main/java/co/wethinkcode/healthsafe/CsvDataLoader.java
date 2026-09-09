@@ -26,9 +26,14 @@ public class CsvDataLoader {
                 int beds = 0; 
                 try {
                     int parsedBeds = Integer.parseInt(columns[3].trim());
-                    beds = Math.max(parsedBeds, 0); 
+                    if (parsedBeds >= 0 && parsedBeds <= 100) {
+                        beds = parsedBeds;
+                    } else {
+                        System.out.println("Bed count (" + parsedBeds + ") out of bounds for " + wardId + ". Defaulting to 0.");
+                    }
+        
                 } catch (NumberFormatException e) {
-                    System.out.println("Invalid bed count for " + wardId + ". Defaulting to 0.");
+                    System.out.println("Invalid text for bed count in " + wardId + ". Defaulting to 0.");
                 }
                 
                 Ward cleanWard = new Ward(wardId, wing, department, beds);
