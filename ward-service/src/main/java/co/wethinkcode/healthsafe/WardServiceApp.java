@@ -61,14 +61,14 @@ public class WardServiceApp {
     }
 
 
-        
-    
+
+
 
 
 
         // TODO (Provides lists of wards and departments.)
         // Add domain endpoints for ward-service here.
-    
+
 }
 
 // MQ TODO: subscribes to ActiveMQ topic MqConfig.TOPIC at MqConfig.BROKER_URL (see co.wethinkcode.healthsafe.mq.MqConfig)
