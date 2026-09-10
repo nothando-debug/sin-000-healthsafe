@@ -3,6 +3,9 @@ package co.wethinkcode.healthsafe;
 import io.javalin.Javalin;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import co.wethinkcode.healthsafe.mq.MqConfig;
+import org.apache.activemq.ActiveMQConnectionFactory;
+import jakarta.jms.*;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -67,12 +70,16 @@ public class StaffingServiceApp {
                 int totalDoctorsNeeded = baseDoctors + alertLevel;
 
 
-                ctx.json(Map.of(
+                Map<String, Object> scheduleMap= (Map.of(
                         "wardId", wardId,
                         "bedsAvailable", beds != null ? beds : "UNKNOWN",
                         "currentEmergencyLevel", alertLevel,
                         "doctorsOnCall", totalDoctorsNeeded
                 ));
+
+                publishStaffingEvent(mapper.writeValueAsString(scheduleMap));
+
+                ctx.json(scheduleMap);
 
             } catch (Exception e) {
                 ctx.status(500).result("Internal Server Error: Could not connect to downstream services. " + e.getMessage());
@@ -81,6 +88,25 @@ public class StaffingServiceApp {
 
         // TODO (Provides on-call schedules for doctors based on ward and status.)
         // Add domain endpoints for staffing-service here.
+    }
+    private static void publishStaffingEvent(String jsonPayload) {
+        try {
+            ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(MqConfig.BROKER_URL);
+            Connection connection = connectionFactory.createConnection();
+            connection.start();
+
+            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            Destination destination = session.createTopic(MqConfig.TOPIC);
+            MessageProducer producer = session.createProducer(destination);
+
+            TextMessage message = session.createTextMessage(jsonPayload);
+            producer.send(message);
+
+            connection.close();
+            System.out.println("Published staffing event to ActiveMQ topic: " + MqConfig.TOPIC);
+        } catch (Exception e) {
+            System.err.println("Failed to publish message to ActiveMQ: " + e.getMessage());
+        }
     }
 }
 
