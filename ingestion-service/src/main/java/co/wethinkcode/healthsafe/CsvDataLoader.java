@@ -22,21 +22,23 @@ public class CsvDataLoader {
                 String wardId = columns[0].trim().toUpperCase();
                 String wing = columns[1].trim().toUpperCase();
                 String department = columns[2].trim().toUpperCase();
+
+                Integer beds = null;
+                String note = null;
+                String rawBeds = columns[3].trim();
                 
-                int beds = 0; 
+
                 try {
                     int parsedBeds = Integer.parseInt(columns[3].trim());
                     if (parsedBeds >= 0 && parsedBeds <= 100) {
                         beds = parsedBeds;
                     } else {
-                        System.out.println("Bed count (" + parsedBeds + ") out of bounds for " + wardId + ". Defaulting to 0.");
-                    }
+                        note = "bedsAvailable was out of realistic bounds ('" + rawBeds + "') — flagged for follow-up";                    }
         
                 } catch (NumberFormatException e) {
-                    System.out.println("Invalid text for bed count in " + wardId + ". Defaulting to 0.");
-                }
-                
-                Ward cleanWard = new Ward(wardId, wing, department, beds);
+                    note = "bedsAvailable was non-numeric ('" + rawBeds + "') — flagged for follow-up";                }
+
+                Ward cleanWard = new Ward(wardId, wing, department, beds, note);
                 cleanWards.put(wardId, cleanWard);
             }
         } catch (IOException e) {
@@ -44,5 +46,18 @@ public class CsvDataLoader {
         }
         
         return cleanWards;
+    }
+    private String toTitleCase(String input) {
+        if (input == null || input.isEmpty()) return input;
+        String[] words = input.toLowerCase().split("\\s+");
+        StringBuilder titleCase = new StringBuilder();
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                titleCase.append(Character.toUpperCase(word.charAt(0)))
+                        .append(word.substring(1))
+                        .append(" ");
+            }
+        }
+        return titleCase.toString().trim();
     }
 }

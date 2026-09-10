@@ -1,9 +1,9 @@
 package co.wethinkcode.healthsafe;
 
 public class Ward {
-    private final String wardId;
-    private final String wing;
-    private final String department;
+    private String wardId;
+    private String wing;
+    private String department;
     private Integer bedsAvailable;
     private String notes;
 
@@ -14,7 +14,7 @@ public class Ward {
         this.wardId = wardId;
         this.wing = wing;
         this.department = department;
-        this.bedsAvailable = bedsAvailable;
+        this.bedsAvailable = bedsAvailable;http://localhost:7031
         this.notes = notes;
 
     }
