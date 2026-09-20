@@ -95,6 +95,28 @@ public class WardServiceApp {
             System.err.println("Failed to initialize MQ Subscriber: " + e.getMessage());
         }
     }
+
+ 
+private static void publishEquipmentFailureEvent(String jsonPayload) {
+    try {
+        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(MqConfig.BROKER_URL);
+        Connection connection = connectionFactory.createConnection();
+        connection.start();
+
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+
+        Destination destination = session.createQueue(MqConfig.QUEUE);
+        MessageProducer producer = session.createProducer(destination);
+
+        TextMessage message = session.createTextMessage(jsonPayload);
+        producer.send(message);
+
+        connection.close();
+        System.out.println("[WardService MQ Producer] Published equipment failure to queue: " + MqConfig.QUEUE);
+    } catch (Exception e) {
+        System.err.println("Failed to publish equipment failure to ActiveMQ: " + e.getMessage());
+    }
+}
 }
 
 
