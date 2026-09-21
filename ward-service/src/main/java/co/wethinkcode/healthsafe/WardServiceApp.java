@@ -6,12 +6,12 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import jakarta.jms.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.*;
 
 import co.wethinkcode.healthsafe.mq.MqConfig;
 import io.javalin.Javalin;
@@ -64,6 +64,39 @@ public class WardServiceApp {
         });
 
         startMqSubscriber();
+
+        app.post("/wards/{id}/failure", ctx -> {
+            String wardId = ctx.pathParam("id").toUpperCase();
+
+            if (!wardDirectory.containsKey(wardId)) {
+                ctx.status(404).result("Ward " + wardId + " not found.");
+                return;
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode body = mapper.readTree(ctx.body());
+
+            String equipmentType = body.has("equipmentType") ? body.get("equipmentType").asText() : "UNKNOWN_EQUIPMENT";
+            String description = body.has("description") ? body.get("description").asText() : "No description provided";
+
+            Map<String, Object> failureEvent = Map.of(
+                    "wardId", wardId,
+                    "equipmentType", equipmentType,
+                    "description", description,
+                    "status", "FAILED",
+                    "reportedAt", System.currentTimeMillis()
+            );
+
+            String jsonPayload = mapper.writeValueAsString(failureEvent);
+
+            publishEquipmentFailureEvent(jsonPayload);
+
+            ctx.status(202).json(Map.of(
+                    "message", "Equipment failure reported successfully.",
+                    "event", failureEvent
+            ));
+        });
+
     }
 
     private static void startMqSubscriber() {
