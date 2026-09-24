@@ -15,9 +15,6 @@ public class EquipmentAlertServiceApp {
 
         startQueueConsumer();
         
-
-        // TODO (Uses a Queue to guarantee delivery of critical medical equipment failure alerts.)
-        // Mechanism: ActiveMQ Queue (guaranteed delivery)
     }
 
     private static void startQueueConsumer() {

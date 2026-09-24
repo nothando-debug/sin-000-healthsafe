@@ -14,7 +14,7 @@ public class Ward {
         this.wardId = wardId;
         this.wing = wing;
         this.department = department;
-        this.bedsAvailable = bedsAvailable;http://localhost:7031
+        this.bedsAvailable = bedsAvailable;
         this.notes = notes;
 
     }
